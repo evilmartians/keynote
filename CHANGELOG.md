@@ -1,5 +1,7 @@
 # Change log
 
+## v2.0.0 (2025-01-10)
+
 - Update the inline template API to pass source as string instead of parsing comments. [@palkan][]
 
   ```rb
