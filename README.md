@@ -34,7 +34,7 @@ Don't forget to run `bundle install`.
 A simple case is making a presenter that's named after a model class and holds
 helper methods related to that model.
 
-``` ruby
+```ruby
 # app/presenters/user_presenter.rb
 class UserPresenter < Keynote::Presenter
   presents :user
@@ -44,7 +44,7 @@ class UserPresenter < Keynote::Presenter
   end
 
   def profile_link
-    link_to user, display_name, data: { user_id: user.id }
+    link_to user, display_name, data: {user_id: user.id}
   end
 end
 ```
@@ -70,22 +70,25 @@ Keynote looks for a class called `UserPresenter`.
 
 ### Generating HTML
 
-To make it easier to generate slightly more complex chunks of HTML, Keynote
-includes a modified version of Magnus Holm's [Rumble](https://github.com/judofyr/rumble)
+To make it easier to generate slightly more complex chunks of HTML, Keynote provides several ways to generate HTML fragments.
+
+#### Using `build_html`
+
+Keynote includes a modified version of Magnus Holm's [Rumble](https://github.com/judofyr/rumble)
 library. Rumble gives us a simple block-based syntax for generating HTML
 fragments. Here's a small example:
 
-``` ruby
+```ruby
 build_html do
   div id: :content do
-    h1 'Hello World', class: :main
+    h1 "Hello World", class: :main
   end
 end
 ```
 
 Becomes:
 
-``` html
+```html
 <div id="content">
   <h1 class="main">Hello World</h1>
 </div>
@@ -95,6 +98,32 @@ You can use tag helpers like `div`, `span`, and `a` only within a block passed
 to the `build_html` method. The `build_html` method returns a safe string. See
 [the documentation for `Keynote::Rumble`](http://rubydoc.info/gems/keynote/Keynote/Rumble)
 for more information.
+
+#### Using inlined partials
+
+You can extend your presenter class with the `Keynote::Inline` module to enable inline templating in any template language supported by Rails. This is useful for small, self-contained templates that don't need to be extracted into separate files.
+
+```ruby
+# app/presenters/user_presenter.rb
+class UserPresenter < Keynote::Presenter
+  presents :user
+
+  include Keynote::Inline
+  # To user Haml or Slim, enabled them explicitly
+  # inline :haml, :slim
+
+  def profile_link
+    erb do
+      <<~ERB
+        <div class="profile_link">
+          <%= link_to user, display_name, data: { user_id: user.id } %>
+          <i class="fa-user"></i>
+        </div>
+      ERB
+    end
+  end
+end
+```
 
 ### A more complex example
 

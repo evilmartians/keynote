@@ -10,15 +10,18 @@ module Keynote
   # ## Basic usage
   #
   # After extending the `Keynote::Inline` module in your presenter class, you
-  # can generate HTML by calling the `erb` method and immediately following it
-  # with a block of comments containing your template:
+  # can generate HTML by calling the `erb` method and passing a template as a string
+  # to it:
   #
   #     def link
-  #       erb
-  #       # <%= link_to user_url(current_user) do %>
-  #       #   <%= image_tag("image1.jpg") %>
-  #       #   <%= image_tag("image2.jpg") %>
-  #       # <% end %>
+  #       erb do
+  #         <<~ERB
+  #           <%= link_to user_url(current_user) do %>
+  #             <%= image_tag("image1.jpg") %>
+  #              <%= image_tag("image2.jpg") %>
+  #           <% end %>
+  #         ERB
+  #       end
   #     end
   #
   # Calling this method renders the ERB template, including passing the calls
@@ -27,23 +30,15 @@ module Keynote
   #
   # ## Passing variables
   #
-  # There are a couple of different ways to pass local variables into an inline
-  # template. The easiest is to pass the `binding` object into the template
-  # method, giving access to all local variables:
+  # You can pass locals as keyword arguments to the `erb` method:
   #
-  #     def local_binding
+  #     def with_locals
   #       x = 1
   #       y = 2
   #
-  #       erb binding
-  #       # <%= x + y %>
-  #     end
-  #
-  # You can also pass a hash of variable names and values instead:
-  #
-  #     def local_binding
-  #       erb x: 1, y: 2
-  #       # <%= x + y %>
+  #       erb(x:, y:) do
+  #         %q(<%= x + y %>)
+  #       end
   #     end
   #
   # ## The `inline` method
@@ -82,18 +77,22 @@ module Keynote
     #     def header
     #       full_name = "#{user.first_name} #{user.last_name}"
     #
-    #       haml binding
-    #       # div#header
-    #       #   h1= full_name
-    #       #   h3= user.most_recent_status
+    #       haml(full_name:) do
+    #         <<~HAML
+    #           div#header
+    #             h1= full_name
+    #             h3= user.most_recent_status
+    #         HAML
+    #       end
     #     end
     #   end
     def inline(*formats)
       require "action_view/context"
 
       Array(formats).each do |format|
-        define_method format do |locals = {}|
-          Renderer.new(self, locals, caller(1)[0], format).render
+        define_method format do |**locals, &block|
+          raise ArgumentError, "You must pass a block to the ##{format} method" unless block
+          Renderer.new(self, locals, caller_locations(1, 1).first, block.call, format).render
         end
       end
     end
@@ -119,41 +118,22 @@ module Keynote
 
     # @private
     class Renderer
-      def initialize(presenter, locals, caller_line, format)
+      def initialize(presenter, locals, loc, source, format)
         @presenter = presenter
-        @locals = extract_locals(locals)
-        @template = Cache.fetch(*parse_caller(caller_line), format, @locals)
+        @locals = locals
+        @template = Cache.fetch(loc.path, loc.lineno, source, format, locals)
       end
 
       def render
         @template.render(@presenter, @locals)
       end
-
-      private
-
-      def extract_locals(locals)
-        return locals unless locals.is_a?(Binding)
-
-        locals.eval("local_variables").map do |local|
-          [local, locals.eval(local.to_s)]
-        end.to_h
-      end
-
-      def parse_caller(caller_line)
-        file, rest = caller_line.split ":", 2
-        line, _ = rest.split " ", 2
-
-        [file.strip, line.to_i]
-      end
     end
 
     # @private
     class Cache
-      COMMENTED_LINE = /^\s*#(.*)$/
-
-      def self.fetch(source_file, line, format, locals)
+      def self.fetch(source_file, line, source, format, locals)
         instance = (Thread.current[:_keynote_template_cache] ||= Cache.new)
-        instance.fetch(source_file, line, format, locals)
+        instance.fetch(source_file, line, source, format, locals)
       end
 
       def self.reset
@@ -164,7 +144,7 @@ module Keynote
         @cache = {}
       end
 
-      def fetch(source_file, line, format, locals)
+      def fetch(source_file, line, source, format, locals)
         local_names = locals.keys.sort
         cache_key = ["#{source_file}:#{line}", *local_names].freeze
         new_mtime = File.mtime(source_file).to_f
@@ -172,8 +152,7 @@ module Keynote
         template, mtime = @cache[cache_key]
 
         if new_mtime != mtime
-          source = read_template(source_file, line)
-
+          source = unindent(source.chomp)
           template = Template.new(source, cache_key[0],
             handler_for_format(format), format:, locals: local_names)
 
@@ -184,20 +163,6 @@ module Keynote
       end
 
       private
-
-      def read_template(source_file, line_num)
-        result = ""
-
-        File.foreach(source_file).drop(line_num).each do |line|
-          if line =~ COMMENTED_LINE
-            result << $1 << "\n"
-          else
-            break
-          end
-        end
-
-        unindent result.chomp
-      end
 
       def handler_for_format(format)
         ActionView::Template.handler_for_extension(format.to_s)
