@@ -21,16 +21,12 @@ describe Keynote::Inline do
     expect(presenter.ivars.strip).to eq("Hello world!")
   end
 
-  it "sees locals passed in as a hash" do
+  it "sees locals" do
     expect(presenter.locals_from_hash.strip).to eq("Local H")
   end
 
-  it "sees locals passed in as a binding" do
-    expect(presenter.locals_from_binding.strip).to eq("Local H")
-  end
-
   it "calls other methods from the same object" do
-    expect(presenter.method_calls.strip.squeeze(" ")).to eq("Local H\nLocal H")
+    expect(presenter.method_calls.strip.squeeze(" ")).to eq("Local H")
   end
 
   it "handles errors relatively gracefully" do
@@ -70,17 +66,14 @@ describe Keynote::Inline do
   end
 
   it "sees updates after the file is reloaded" do
-    expect(presenter.simple_template.strip).to eq("Here's some math: 4")
+    expect(presenter.simple_template("Here's some math: 4").strip).to eq("Here's some math: 4")
 
-    allow_any_instance_of(Keynote::Inline::Cache)
-      .to receive(:read_template).and_return("HELLO")
-
-    expect(presenter.simple_template.strip).to eq("Here's some math: 4")
+    expect(presenter.simple_template("bla").strip).to eq("Here's some math: 4")
 
     allow(File).to receive(:mtime).with(
       Object.const_source_location(:InlineUserPresenter).first
     ).and_return(Time.now + 1)
 
-    expect(presenter.simple_template).to eq("HELLO")
+    expect(presenter.simple_template("HELLO")).to eq("HELLO")
   end
 end

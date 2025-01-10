@@ -29,21 +29,14 @@ class MyPresenter < Keynote::Presenter
   def erb_hash
     a_local = 1000
 
-    erb a_local: a_local
-    # <div class="foobar" id="baz">
-    #   <p><%= my_string %></p>
-    #   <p><%= a_local %></p>
-    # </div>
-  end
-
-  def erb_binding
-    a_local = 1000
-
-    erb binding
-    # <div class="foobar" id="baz">
-    #   <p><%= my_string %></p>
-    #   <p><%= a_local %></p>
-    # </div>
+    erb(a_local:) do
+      <<~ERB
+        <div class="foobar" id="baz">
+          <p><%= my_string %></p>
+          <p><%= a_local %></p>
+        </div>
+      ERB
+    end
   end
 
   def raw_erb_template(tpl)
@@ -71,7 +64,6 @@ Benchmark.ips do |x|
 
   x.report("rumble") { presenter.rumble }
   x.report("erb_hash") { presenter.erb_hash }
-  x.report("erb_binding") { presenter.erb_binding }
   x.report("raw_erb_template") { presenter.raw_erb_template(template) }
   x.compare!
 end

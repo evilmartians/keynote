@@ -9,3 +9,6 @@ AllCops:
 
 Layout/IndentationConsistency:
   Enabled: false
+
+Layout/InitialIndentation:
+  Enabled: false

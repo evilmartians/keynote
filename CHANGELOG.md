@@ -1,5 +1,26 @@
 # Change log
 
+- Update the inline template API to pass source as string instead of parsing comments. [@palkan][]
+
+  ```rb
+  # BEFORE:
+  def method_with_a_template
+    a = "foo"
+
+    erb
+    # <div><%= a %></div>
+  end
+
+  # AFTER:
+  def method_with_a_template
+    a = "foo"
+
+    erb(a:) { "<div><%= a %></div>" }
+  end
+  ```
+
+  This change makes inline templates less magical, IDE-friendly, and much faster.
+
 - **Ruby 3+** and **Rails 7+** are required. [@palkan][]
 
 ## v1.1.1
