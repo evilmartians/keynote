@@ -1,4 +1,4 @@
-# encoding: UTF-8
+# frozen_string_literal: false
 
 module Keynote
   # HTML markup in Ruby.
@@ -189,7 +189,7 @@ module Keynote
       tags.each do |tag|
         sc = SELFCLOSING.include?(tag).inspect
 
-        base.class_eval <<-RUBY
+        base.class_eval <<-RUBY, __FILE__, __LINE__ + 1
           def #{tag}(*args, &blk)                   # def a(*args, &blk)
             rumble_tag :#{tag}, #{sc}, *args, &blk  #   rumble_tag :a, false, *args, &blk
           end                                       # end
@@ -243,17 +243,19 @@ module Keynote
         end
       end
 
+      def respond_to_missing?(name, include_private = false)
+        true
+      end
+
       def method_missing(name, content = nil, attrs = nil, &blk)
         name = name.to_s
 
-        if name[-1] == ?!
+        if name[-1] == "!"
           attributes[:id] = name[0..-2]
+        elsif attributes.has_key?(:class)
+          attributes[:class] += " #{name}"
         else
-          if attributes.has_key?(:class)
-            attributes[:class] += " #{name}"
-          else
-            attributes[:class] = name
-          end
+          attributes[:class] = name
         end
 
         insert(content, attrs, &blk)
@@ -292,8 +294,13 @@ module Keynote
         raise $!
       end
 
-      def to_ary; nil end
-      def to_str; to_s end
+      def to_ary
+        nil
+      end
+
+      def to_str
+        to_s
+      end
 
       def html_safe?
         true
@@ -313,7 +320,9 @@ module Keynote
         end
       end
 
-      def inspect; to_s.inspect end
+      def inspect
+        to_s.inspect
+      end
 
       private
 
@@ -344,7 +353,7 @@ module Keynote
               Rumble.html_escape(value)
             end
 
-          res << " #{name}=\"#{value.gsub('"'.freeze, '&quot;'.freeze)}\""
+          res << " #{name}=\"#{value.gsub('"', "&quot;")}\""
           res
         end
       end

@@ -1,0 +1,11 @@
+inherit_from: ".rubocop.yml"
+
+require:
+  - rubocop-md
+
+AllCops:
+  Include:
+    - '**/*.md'
+
+Layout/IndentationConsistency:
+  Enabled: false

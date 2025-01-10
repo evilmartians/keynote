@@ -1,32 +1,30 @@
-# encoding: UTF-8
-
-require 'helper'
+# frozen_string_literal: true
 
 describe Keynote::Railtie do
   let(:controller) { HelloController.new }
-  let(:context)    { controller.view_context }
+  let(:context) { controller.view_context }
 
-  it "should make the present and k methods available to controllers" do
-    controller.must_respond_to :present
-    controller.must_respond_to :k
+  it "makes the present and k methods available to controllers" do
+    expect(controller).to respond_to(:present)
+    expect(controller).to respond_to(:k)
   end
 
-  it "should make the present and k methods available to views" do
-    context.must_respond_to :present
-    context.must_respond_to :k
+  it "makes the present and k methods available to views" do
+    expect(context).to respond_to(:present)
+    expect(context).to respond_to(:k)
   end
 
-  it "should pass present call from controller to Keynote.present" do
-    context = stub
-    controller.stubs(:view_context).returns(context)
+  it "passes present call from controller to Keynote.present" do
+    context = double
+    allow(controller).to receive(:view_context).and_return(context)
 
-    Keynote.expects(:present).with(context, :dallas, :leeloo, :multipass)
+    expect(Keynote).to receive(:present).with(context, :dallas, :leeloo, :multipass)
 
     controller.present(:dallas, :leeloo, :multipass)
   end
 
-  it "should pass present call from view to Keynote.present" do
-    Keynote.expects(:present).with(context, :dallas, :leeloo, :multipass)
+  it "passes present call from view to Keynote.present" do
+    expect(Keynote).to receive(:present).with(context, :dallas, :leeloo, :multipass)
 
     context.present(:dallas, :leeloo, :multipass)
   end

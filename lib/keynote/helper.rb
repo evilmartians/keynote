@@ -1,4 +1,4 @@
-# encoding: UTF-8
+# frozen_string_literal: true
 
 module Keynote
   # `Keynote::Helper` is mixed into `ActionView::Base`, providing a `present`
@@ -6,9 +6,8 @@ module Keynote
   module Helper
     # Instantiate a presenter.
     # @see Keynote.present
-    def present(*objects, &blk)
-      Keynote.present(self, *objects, &blk)
-    end
-    alias k present
+    def present(...) = Keynote.present(self, ...)
+
+    alias_method :k, :present
   end
 end

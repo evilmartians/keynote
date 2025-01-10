@@ -1,6 +1,6 @@
-# encoding: UTF-8
+# frozen_string_literal: true
 
 module Keynote
   # @private
-  VERSION = "1.1.1"
+  VERSION = "2.0.0-dev"
 end

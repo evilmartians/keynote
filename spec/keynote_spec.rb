@@ -1,129 +1,127 @@
-# encoding: UTF-8
-
-require 'helper'
+# frozen_string_literal: true
 
 describe Keynote do
-  let(:view)  { Object.new }
+  let(:view) { Object.new }
 
-  describe "with a normal presenter" do
+  describe ".present" do
     let(:model) { Normal.new }
 
-    it "should find and instantiate implicitly" do
+    it "finds and instantiates implicitly" do
       p = Keynote.present(view, model)
 
-      p.wont_be_nil
-      p.must_be_instance_of NormalPresenter
+      expect(p).not_to be_nil
+      expect(p).to be_a(NormalPresenter)
 
-      p.view.must_equal  view
-      p.model.must_equal model
+      expect(p.view).to eq(view)
+      expect(p.model).to eq(model)
     end
 
-    it "should find and instantiate explicitly" do
-      p = Keynote.present(view, :normal, 'hello')
+    it "finds and instantiates explicitly" do
+      p = Keynote.present(view, :normal, "hello")
 
-      p.wont_be_nil
-      p.must_be_instance_of NormalPresenter
+      expect(p).not_to be_nil
+      expect(p).to be_a(NormalPresenter)
 
-      p.view.must_equal  view
-      p.model.must_equal 'hello'
+      expect(p.view).to eq(view)
+      expect(p.model).to eq("hello")
     end
 
-    it "should take a block and pass the presenter into it" do
-      m = mock()
-      m.expects(:block_yielded)
+    it "takes a block and passes the presenter into it" do
+      m = double
+      expect(m).to receive(:block_yielded)
 
-      Keynote.present(view, :normal, 'hello') do |p|
+      Keynote.present(view, :normal, "hello") do |p|
         m.block_yielded
 
-        p.wont_be_nil
-        p.must_be_instance_of NormalPresenter
+        expect(p).not_to be_nil
+        expect(p).to be_a(NormalPresenter)
 
-        p.view.must_equal  view
-        p.model.must_equal 'hello'
+        expect(p.view).to eq(view)
+        expect(p.model).to eq("hello")
       end
     end
 
-    it "should integrate with Rumble" do
-      p  = Keynote.present(view, model)
+    it "integrates with Rumble" do
+      p = Keynote.present(view, model)
       rx = /<div>&lt;script&gt;alert\(/
 
-      p.some_bad_html.scan(rx).count.must_equal 3
-    end
-  end
-
-  describe "with a nested presenter" do
-    let(:model) { Keynote::Nested.new }
-
-    it "should find and instantiate implicitly" do
-      p = Keynote.present(view, model)
-
-      p.wont_be_nil
-      p.must_be_instance_of Keynote::NestedPresenter
-
-      p.view.must_equal  view
-      p.model.must_equal model
+      expect(p.some_bad_html.scan(rx).count).to eq(3)
     end
 
-    it "should find and instantiate explicitly" do
-      p = Keynote.present(view, "keynote/nested", 'hello')
+    context "with a nested presenter" do
+      let(:model) { Foo::Bar.new }
 
-      p.wont_be_nil
-      p.must_be_instance_of Keynote::NestedPresenter
+      it "finds and instantiates implicitly" do
+        p = Keynote.present(view, model)
 
-      p.view.must_equal  view
-      p.model.must_equal 'hello'
-    end
-  end
+        expect(p).not_to be_nil
+        expect(p).to be_a(Foo::BarPresenter)
 
-  describe "caching" do
-    describe "when there is a view context" do
-      let(:view_2) { Object.new }
-
-      it "should cache based on the models" do
-        model_1 = Normal.new
-        model_2 = Normal.new
-
-        presented_1 = Keynote.present(view, model_1)
-        presented_2 = Keynote.present(view, model_1)
-
-        presented_1.must_be :equal?, presented_2
-
-        presented_3 = Keynote.present(view, :combined, model_1, model_2)
-        presented_4 = Keynote.present(view, :combined, model_1, model_2)
-        presented_5 = Keynote.present(view, :combined, model_2, model_1)
-
-        presented_3.wont_be :equal?, presented_1
-        presented_3.must_be :equal?, presented_4
-        presented_3.wont_be :equal?, presented_5
+        expect(p.view).to eq(view)
+        expect(p.model).to eq(model)
       end
 
-      it "should cache even if there are no models" do
-        presenter_1 = Keynote.present(view, :empty)
-        presenter_2 = Keynote.present(view, :empty)
+      it "finds and instantiates explicitly" do
+        p = Keynote.present(view, "foo/bar", "hello")
 
-        presenter_1.must_be :equal?, presenter_2
-      end
+        expect(p).not_to be_nil
+        expect(p).to be_a(Foo::BarPresenter)
 
-      it "should be scoped to the specific view context" do
-        model = Normal.new
-
-        presenter_1 = Keynote.present(view, model)
-        presenter_1.view.must_equal view
-
-        presenter_2 = Keynote.present(view_2, model)
-        presenter_2.wont_be :equal?, presenter_1
-        presenter_2.view.must_equal view_2
+        expect(p.view).to eq(view)
+        expect(p.model).to eq("hello")
       end
     end
 
-    describe "when there's no view context" do
-      it "shouldn't cache" do
-        model = Normal.new
+    context "caching" do
+      describe "when there is a view context" do
+        let(:view_2) { Object.new }
 
-        presented_1 = Keynote.present(nil, model)
-        presented_2 = Keynote.present(nil, model)
+        it "caches based on the models" do
+          model_1 = Normal.new
+          model_2 = Normal.new
 
-        presented_1.wont_be :equal?, presented_2
+          presented_1 = Keynote.present(view, model_1)
+          presented_2 = Keynote.present(view, model_1)
+
+          expect(presented_1).to equal(presented_2)
+
+          presented_3 = Keynote.present(view, :combined, model_1, model_2)
+          presented_4 = Keynote.present(view, :combined, model_1, model_2)
+          presented_5 = Keynote.present(view, :combined, model_2, model_1)
+
+          expect(presented_3).not_to equal(presented_1)
+          expect(presented_3).to equal(presented_4)
+          expect(presented_3).not_to equal(presented_5)
+        end
+
+        it "caches even if there are no models" do
+          presenter_1 = Keynote.present(view, :empty)
+          presenter_2 = Keynote.present(view, :empty)
+
+          expect(presenter_1).to equal(presenter_2)
+        end
+
+        it "is scoped to the specific view context" do
+          model = Normal.new
+
+          presenter_1 = Keynote.present(view, model)
+          expect(presenter_1.view).to eq(view)
+
+          presenter_2 = Keynote.present(view_2, model)
+          expect(presenter_2).not_to equal(presenter_1)
+          expect(presenter_2.view).to eq(view_2)
+        end
+      end
+
+      describe "when there's no view context" do
+        it "does not cache" do
+          model = Normal.new
+
+          presented_1 = Keynote.present(nil, model)
+          presented_2 = Keynote.present(nil, model)
+
+          expect(presented_1).not_to equal(presented_2)
+        end
       end
     end
   end

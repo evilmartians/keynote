@@ -1,0 +1,4 @@
+bump:
+  file: lib/keynote/version.rb
+  skip_ci: true
+

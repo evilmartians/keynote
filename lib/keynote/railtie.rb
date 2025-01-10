@@ -1,12 +1,11 @@
-# encoding: UTF-8
+# frozen_string_literal: true
 
-require 'rails/railtie'
+require "rails/railtie"
 
 module Keynote
   # @private
   class Railtie < Rails::Railtie
     config.after_initialize do |app|
-      add_presenters_to_paths(app)
       load_test_integration
     end
 
@@ -22,31 +21,15 @@ module Keynote
       include Keynote::Controller
     end
 
-    rake_tasks do
-      if defined?(MiniTest::Rails)
-        load File.expand_path("../testing/minitest_rails.rake", __FILE__)
-      end
-    end
-
-    def self.add_presenters_to_paths(app)
-      if ::Rails.version.to_f >= 4
-        app.config.paths.add 'app/presenters'
-      else
-        app.config.paths.add 'app/presenters', :eager_load => true
-      end
-    end
-
     def self.load_test_integration
       if defined?(RSpec::Rails)
-        require 'keynote/testing/rspec'
+        require "keynote/testing/rspec"
       end
 
-      if defined?(MiniTest::Rails)
-        require 'keynote/testing/minitest_rails'
-      end
-
-      if !defined?(MiniTest::Rails)
-        require "keynote/testing/test_unit"
+      begin
+        ::ActionView::TestCase # rubocop:disable Lint/Void
+        require "keynote/testing/minitest"
+      rescue
       end
     end
   end

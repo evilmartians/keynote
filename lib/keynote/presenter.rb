@@ -1,4 +1,4 @@
-# encoding: UTF-8
+# frozen_string_literal: true
 
 module Keynote
   # Keynote::Presenter is a base class for presenters, objects that encapsulate
@@ -36,10 +36,10 @@ module Keynote
         objects.unshift :view
         attr_reader(*objects)
 
-        param_list = objects.join(', ')
-        ivar_list  = objects.map { |o| "@#{o}" }.join(', ')
+        param_list = objects.join(", ")
+        ivar_list = objects.map { "@#{it}" }.join(", ")
 
-        class_eval <<-RUBY
+        class_eval <<-RUBY, __FILE__, __LINE__ + 1
           def initialize(#{param_list})  # def initialize(view, foo)
             #{ivar_list} = #{param_list} #   @view, @foo = view, foo
           end                            # end
@@ -48,9 +48,7 @@ module Keynote
 
       # Define a more complete set of HTML5 tag methods. The extra tags are
       # listed in {Keynote::Rumble::COMPLETE}.
-      def use_html_5_tags
-        Rumble.use_html_5_tags(self)
-      end
+      def use_html_5_tags = Rumble.use_html_5_tags(self)
 
       # List the object names this presenter wraps. The default is an empty
       # array; calling `presents :foo, :bar` in the presenter's class body will
@@ -74,15 +72,15 @@ module Keynote
 
     # Instantiate another presenter.
     # @see Keynote.present
-    def present(*objects, &blk)
-      Keynote.present(@view, *objects, &blk)
+    def present(...)
+      Keynote.present(@view, ...)
     end
-    alias k present
+    alias_method :k, :present
 
     # @private
     def inspect
       objects = self.class.object_names
-      render  = proc { |name| "#{name}: #{send(name).inspect}" }
+      render = proc { |name| "#{name}: #{send(name).inspect}" }
 
       if objects.any?
         "#<#{self.class} #{objects.map(&render).join(", ")}>"
@@ -105,9 +103,9 @@ module Keynote
     #       "#{h author.name} &mdash; #{h blog_post.title}".html_safe
     #     end
     #   end
-    def method_missing(method_name, *args, **kwargs, &block)
+    def method_missing(method_name, ...)
       if @view.respond_to?(method_name, true)
-        @view.send(method_name, *args, **kwargs, &block)
+        @view.send(method_name, ...)
       else
         super
       end
@@ -116,16 +114,12 @@ module Keynote
     # @private
     # We have to make a logger method available so that ActionView::Template
     # can safely treat a presenter as a view object.
-    def logger
-      Rails.logger
-    end
+    def logger = Rails.logger
 
     private
 
     # We have to explicitly proxy `#capture` because ActiveSupport creates a
     # `Kernel#capture` method.
-    def capture(*args, &block)
-      @view.capture(*args, &block)
-    end
+    def capture(...) = @view.capture(...)
   end
 end

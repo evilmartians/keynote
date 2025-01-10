@@ -1,7 +1,6 @@
-# encoding: UTF-8
+# frozen_string_literal: false
 
 require "action_view"
-require "thread"
 
 module Keynote
   # The `Inline` mixin lets you write inline templates as comments inside the
@@ -103,6 +102,19 @@ module Keynote
     # base class.
     def self.extended(base)
       base.inline :erb
+      base.include InstanceMethods
+    end
+
+    module InstanceMethods
+      # A callback for Action View: https://github.com/rails/rails/blob/a32eab53a58540b9ca57da429c5f64564db43126/actionview/lib/action_view/base.rb#L261
+      def _run(method, template, locals, buffer, add_to_stack: true, has_strict_locals: false, &block)
+        old_output_buffer, old_virtual_path, old_template = @output_buffer, @virtual_path, @current_template
+        @current_template = template if add_to_stack
+        @output_buffer = buffer
+        public_send(method, locals, buffer, &block)
+      ensure
+        @output_buffer, @virtual_path, @current_template = old_output_buffer, old_virtual_path, old_template
+      end
     end
 
     # @private
@@ -122,14 +134,14 @@ module Keynote
       def extract_locals(locals)
         return locals unless locals.is_a?(Binding)
 
-        Hash[locals.eval("local_variables").map do |local|
+        locals.eval("local_variables").map do |local|
           [local, locals.eval(local.to_s)]
-        end]
+        end.to_h
       end
 
       def parse_caller(caller_line)
         file, rest = caller_line.split ":", 2
-        line, _    = rest.split " ", 2
+        line, _ = rest.split " ", 2
 
         [file.strip, line.to_i]
       end
@@ -154,8 +166,8 @@ module Keynote
 
       def fetch(source_file, line, format, locals)
         local_names = locals.keys.sort
-        cache_key   = ["#{source_file}:#{line}", *local_names].freeze
-        new_mtime   = File.mtime(source_file).to_f
+        cache_key = ["#{source_file}:#{line}", *local_names].freeze
+        new_mtime = File.mtime(source_file).to_f
 
         template, mtime = @cache[cache_key]
 
@@ -163,7 +175,7 @@ module Keynote
           source = read_template(source_file, line)
 
           template = Template.new(source, cache_key[0],
-            handler_for_format(format), locals: local_names)
+            handler_for_format(format), format:, locals: local_names)
 
           @cache[cache_key] = [template, new_mtime]
         end
@@ -203,39 +215,12 @@ module Keynote
           end
         end
 
-        text.gsub(/^#{margin}/, ' ' * left_padding)
+        text.gsub(/^#{margin}/, " " * left_padding)
       end
     end
 
     # @private
-    class TemplateFor41AndLower < ActionView::Template
-      # Older versions of Rails don't have this mutex, but we probably want it,
-      # so let's make sure it's there.
-      def initialize(*)
-        super
-        @compile_mutex = Mutex.new
-      end
-
-      # The only difference between this #compile! and the normal one is that
-      # we call `view.class` instead of `view.singleton_class`, so that the
-      # template method gets defined as an instance method on the presenter
-      # and therefore sticks around between presenter instances.
-      def compile!(view)
-        return if @compiled
-
-        @compile_mutex.synchronize do
-          return if @compiled
-
-          compile(view, view.class)
-
-          @source = nil if defined?(@virtual_path) && @virtual_path
-          @compiled = true
-        end
-      end
-    end
-
-    # @private
-    class TemplateFor42AndHigher < ActionView::Template
+    class Template < ActionView::Template
       # The only difference between this #compile! and the normal one is that
       # we call `view.class` instead of `view.singleton_class`, so that the
       # template method gets defined as an instance method on the presenter
@@ -252,14 +237,6 @@ module Keynote
           @compiled = true
         end
       end
-    end
-
-    if Rails.version.to_f < 4.2
-      # @private
-      Template = TemplateFor41AndLower
-    else
-      # @private
-      Template = TemplateFor42AndHigher
     end
   end
 end

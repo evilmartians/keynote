@@ -1,4 +1,4 @@
-# encoding: UTF-8
+# frozen_string_literal: true
 
 module Keynote
   # `Keynote::Controller` is mixed into `ActionController::Base` and
@@ -7,9 +7,8 @@ module Keynote
   module Controller
     # Instantiate a presenter.
     # @see Keynote.present
-    def present(*objects, &blk)
-      Keynote.present(view_context, *objects, &blk)
-    end
-    alias k present
+    def present(...) = Keynote.present(view_context, ...)
+
+    alias_method :k, :present
   end
 end

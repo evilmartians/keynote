@@ -1,0 +1,26 @@
+require:
+  - standard
+
+inherit_gem:
+  standard: config/base.yml
+
+inherit_from:
+  - .rubocop/rspec.yml
+
+AllCops:
+  Exclude:
+    - 'bin/*'
+    - 'tmp/**/*'
+    - 'Gemfile'
+    - 'vendor/**/*'
+    - 'gemfiles/**/*'
+    - 'lib/.rbnext/**/*'
+    - 'lib/generators/**/templates/*.rb'
+    - '.github/**/*'
+  DisplayCopNames: true
+  SuggestExtensions: false
+  NewCops: disable
+  TargetRubyVersion: 3.4
+
+Style/FrozenStringLiteralComment:
+  Enabled: true

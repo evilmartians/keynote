@@ -1,0 +1,5 @@
+pre-commit:
+  commands:
+    lint:
+      run: bundle exec rubocop {staged_files}
+      glob: "*.rb"

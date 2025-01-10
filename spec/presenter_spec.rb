@@ -1,23 +1,25 @@
-# encoding: UTF-8
-
-require 'helper'
-
-TestPresenter = Keynote::Presenter
+# frozen_string_literal: true
 
 describe Keynote::Presenter do
+  before do
+    stub_const("TestPresenter", Class.new(Keynote::Presenter))
+  end
+
+  let(:presenter_class) { TestPresenter }
+
   describe "delegation" do
     let(:klass) do
-      Class.new(TestPresenter) do
+      Class.new(presenter_class) do
         presents :grizzly, :bear
-        delegate :adams, :to => :grizzly
-        delegate :man, :to => :grizzly, :prefix => true
+        delegate :adams, to: :grizzly
+        delegate :man, to: :grizzly, prefix: true
       end
     end
 
-    it "should be able to use ActiveSupport Module#delegate method" do
-      mock = mock()
-      mock.expects(:adams)
-      mock.expects(:man)
+    it "uses ActiveSupport Module#delegate method" do
+      mock = double
+      expect(mock).to receive(:adams)
+      expect(mock).to receive(:man)
 
       klass.new(nil, mock, nil).tap do |p|
         p.adams
@@ -27,44 +29,42 @@ describe Keynote::Presenter do
   end
 
   describe ".presents" do
-    it "should take just the view context by default" do
-      klass = Class.new(TestPresenter)
+    it "takes just the view context by default" do
+      klass = Class.new(presenter_class)
 
-      klass.new(1).instance_variable_get(:@view).must_equal 1
+      expect(klass.new(1).instance_variable_get(:@view)).to eq(1)
     end
 
     describe "with two parameters" do
       let(:klass) do
-        Class.new(TestPresenter) do
+        Class.new(presenter_class) do
           presents :grizzly, :bear
         end
       end
 
-      it "should let you specify other objects to take" do
-        klass.new(1, 2, 3).instance_eval do
-          @view.must_equal 1
-          @grizzly.must_equal 2
-          @bear.must_equal 3
-        end
+      it "lets you specify other objects to take" do
+        presenter = klass.new(1, 2, 3)
+        expect(presenter.instance_variable_get(:@view)).to eq(1)
+        expect(presenter.instance_variable_get(:@grizzly)).to eq(2)
+        expect(presenter.instance_variable_get(:@bear)).to eq(3)
       end
 
-      it "should not be callable with the wrong arity" do
-        proc { klass.new(1, 2) }.must_raise ArgumentError
+      it "is not callable with the wrong arity" do
+        expect { klass.new(1, 2) }.to raise_error(ArgumentError)
       end
 
-      it "should generate readers for the objects" do
-        klass.new(1, 2, 3).tap do |p|
-          p.view.must_equal 1
-          p.grizzly.must_equal 2
-          p.bear.must_equal 3
-        end
+      it "generates readers for the objects" do
+        p = klass.new(1, 2, 3)
+        expect(p.view).to eq(1)
+        expect(p.grizzly).to eq(2)
+        expect(p.bear).to eq(3)
       end
     end
   end
 
   describe ".use_html5_tags" do
     let(:klass) do
-      Class.new(TestPresenter) do
+      Class.new(presenter_class) do
         def generate_h3(content)
           build_html { h3 content }
         end
@@ -75,16 +75,16 @@ describe Keynote::Presenter do
       end
     end
 
-    it "should add Rumble tags like `small` while preserving existing tags" do
+    it "adds Rumble tags like `small` while preserving existing tags" do
       presenter = klass.new(nil)
 
-      presenter.generate_h3("hi").must_equal "<h3>hi</h3>"
-      proc { presenter.generate_small("uh-oh") }.must_raise NoMethodError
+      expect(presenter.generate_h3("hi")).to eq("<h3>hi</h3>")
+      expect { presenter.generate_small("uh-oh") }.to raise_error(NoMethodError)
 
       klass.use_html_5_tags
 
-      presenter.generate_h3("hi").must_equal "<h3>hi</h3>"
-      presenter.generate_small("hi").must_equal "<small>hi</small>"
+      expect(presenter.generate_h3("hi")).to eq("<h3>hi</h3>")
+      expect(presenter.generate_small("hi")).to eq("<small>hi</small>")
     end
   end
 
@@ -94,54 +94,62 @@ describe Keynote::Presenter do
       c2 = Class.new(Keynote::Presenter)
 
       c1.object_names << :foo
-      c1.object_names.must_equal [:foo]
-      c2.object_names.must_equal []
+      expect(c1.object_names).to eq([:foo])
+      expect(c2.object_names).to eq([])
     end
 
     it "matches the list of presented objects" do
       c = Class.new(Keynote::Presenter)
-      c.object_names.must_equal []
+      expect(c.object_names).to eq([])
       c.presents :biff, :bam, :pow
-      c.object_names.must_equal [:biff, :bam, :pow]
+      expect(c.object_names).to eq([:biff, :bam, :pow])
     end
   end
 
   describe "#present" do
-    it "should pass its view context through to the new presenter" do
-      mock = mock()
-      mock.expects(:pizza)
+    it "passes its view context through to the new presenter" do
+      mock = double
+      expect(mock).to receive(:pizza)
 
-      p1 = TestPresenter.new(mock)
+      p1 = presenter_class.new(mock)
       p2 = p1.present(:test)
 
-      p1.wont_equal p2
+      expect(p1).not_to eq(p2)
       p2.pizza
     end
   end
 
   describe "#inspect" do
     it "includes the class name" do
-      CombinedPresenter.new(:view, :a, :b).inspect.
-        must_match(/^#<CombinedPresenter /)
+      expect(CombinedPresenter.new(:view, :a, :b).inspect)
+        .to match(/^#<CombinedPresenter /)
     end
 
     it "shows .inspect output for each presented object" do
-      c1 = Class.new(Object) { def inspect; "c1"; end }
-      c2 = Class.new(Object) { def inspect; "c2"; end }
-      p  = CombinedPresenter.new(:view, c1.new, c2.new)
+      c1 = Class.new(Object) {
+        def inspect
+          "c1"
+        end
+      }
+      c2 = Class.new(Object) {
+        def inspect
+          "c2"
+        end
+      }
+      p = CombinedPresenter.new(:view, c1.new, c2.new)
 
-      p.inspect.must_equal "#<CombinedPresenter model_1: c1, model_2: c2>"
+      expect(p.inspect).to eq("#<CombinedPresenter model_1: c1, model_2: c2>")
     end
 
-    it "shouldn't leave extra padding for zero-arg presenters" do
-      EmptyPresenter.new(:view).inspect.must_equal "#<EmptyPresenter>"
+    it "leaves no extra padding for zero-arg presenters" do
+      expect(EmptyPresenter.new(:view).inspect).to eq("#<EmptyPresenter>")
     end
   end
 
   describe "#method_missing" do
-    it "should pass unknown method calls through to the view" do
-      mock = mock()
-      mock.expects(:talking).with(:heads)
+    it "passes unknown method calls through to the view" do
+      mock = double
+      expect(mock).to receive(:talking).with(:heads)
 
       object = Class.new do
         define_method(:talking) do |arg|
@@ -150,20 +158,20 @@ describe Keynote::Presenter do
         private :talking
       end.new
 
-      TestPresenter.new(object).talking(:heads)
+      presenter_class.new(object).talking(:heads)
     end
 
-    it "should respond_to? methods of the view" do
+    it "responds to methods of the view" do
       object = Class.new do
         define_method(:talking) do |arg|
         end
         private :talking
       end.new
 
-      TestPresenter.new(object).respond_to?(:talking).must_equal true
+      expect(presenter_class.new(object).respond_to?(:talking)).to be true
     end
 
-    it "should raise unknown methods at the presenter, not the view" do
+    it "raises unknown methods at the presenter, not the view" do
       err = nil
 
       begin
@@ -172,8 +180,8 @@ describe Keynote::Presenter do
         err = e
       end
 
-      err.wont_be_nil
-      err.message.must_match(/Keynote::Presenter/)
+      expect(err).not_to be_nil
+      expect(err.message).to match(/Keynote::Presenter/)
     end
   end
 end

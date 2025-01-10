@@ -1,157 +1,86 @@
-# encoding: UTF-8
+# frozen_string_literal: true
 
-require "helper"
-require "fileutils"
-require "slim"
-require "haml"
-require "haml/template"
+require "action_view/base"
 
-module Keynote
-  describe Inline do
-    let(:presenter) { InlineUser.new(:view) }
+describe Keynote::Inline do
+  let(:presenter) { InlineUserPresenter.new(:view) }
 
-    def clean_whitespace(str)
-      str.gsub(/\s/, "")
+  def clean_whitespace(str)
+    str.gsub(/\s/, "")
+  end
+
+  before do
+    Keynote::Inline::Cache.reset
+  end
+
+  it "renders a template" do
+    expect(presenter.simple_template.strip).to eq("Here's some math: 4")
+  end
+
+  it "sees instance variables from the presenter" do
+    expect(presenter.ivars.strip).to eq("Hello world!")
+  end
+
+  it "sees locals passed in as a hash" do
+    expect(presenter.locals_from_hash.strip).to eq("Local H")
+  end
+
+  it "sees locals passed in as a binding" do
+    expect(presenter.locals_from_binding.strip).to eq("Local H")
+  end
+
+  it "calls other methods from the same object" do
+    expect(presenter.method_calls.strip.squeeze(" ")).to eq("Local H\nLocal H")
+  end
+
+  it "handles errors relatively gracefully" do
+    begin
+      presenter.error_handling
+    rescue => e
     end
 
-    class InlineUser < Keynote::Presenter
-      extend Keynote::Inline
-      inline :slim, :haml
+    expect(e).to be_a(ActionView::Template::Error)
 
-      def simple_template
-        erb
-        # Here's some math: <%= 2 + 2 %>
-      end
-
-      def ivars
-        @greetee = "world"
-        erb
-        # Hello <%= @greetee %>!
-      end
-
-      def locals_from_hash
-        erb local: "H"
-        # Local <%= local %>
-      end
-
-      def locals_from_binding
-        local = "H"
-        erb binding
-        # Local <%= local %>
-      end
-
-      def method_calls
-        erb
-        # <%= locals_from_hash %>
-        # <%= locals_from_binding %>
-      end
-
-      def error_handling
-        erb
-        # <% raise "UH OH" %>
-      end
-
-      def fix_indentation
-        slim
-        # .indented_slightly
-        #   - (2..4).each do |i|
-        #     ' #{i} times
-      end
-
-      def erb_escaping
-        raw = erb
-        # <%= "<script>alert(1);</script>" %>
-        escaped = erb
-        # <%= "<script>alert(1);</script>".html_safe %>
-        raw + escaped
-      end
-
-      def slim_escaping
-        raw = slim
-        # = "<script>alert(1);</script>"
-        escaped = slim
-        # = "<script>alert(1);</script>".html_safe
-        raw + escaped
-      end
-
-      def haml_escaping
-        raw = haml
-        # = "<script>alert(1);</script>"
-        escaped = haml
-        # = "<script>alert(1);</script>".html_safe
-        raw + escaped
-      end
+    if e.respond_to?(:original_exception)
+      expect(e.original_exception).to be_a(RuntimeError)
+      expect(e.original_exception.message).to eq("UH OH")
+    else
+      expect(e.cause).to be_a(RuntimeError)
+      expect(e.cause.message).to eq("UH OH")
     end
+  end
 
-    before do
-      Keynote::Inline::Cache.reset
-    end
+  it "removes leading indentation" do
+    expect(presenter.fix_indentation).to eq(
+      "<div class=\"indented_slightly\">2 times 3 times 4 times </div>"
+    )
+  end
 
-    it "should render a template" do
-      presenter.simple_template.strip.must_equal "Here's some math: 4"
-    end
+  it "escapes HTML by default" do
+    unescaped = "<script>alert(1);</script>"
+    escaped = unescaped.gsub("<", "&lt;").gsub(">", "&gt;")
+    escaped2 = escaped.gsub("/", "&#47;") # for Slim w/ Rails > 3.0 (??)
 
-    it "should see instance variables from the presenter" do
-      presenter.ivars.strip.must_equal "Hello world!"
-    end
+    expect(clean_whitespace(presenter.erb_escaping)).to eq(escaped + unescaped)
+    expect(clean_whitespace(presenter.haml_escaping)).to eq(escaped + unescaped)
 
-    it "should see locals passed in as a hash" do
-      presenter.locals_from_hash.strip.must_equal "Local H"
-    end
+    expect([escaped + unescaped, escaped2 + unescaped]).to include(
+      clean_whitespace(presenter.slim_escaping)
+    )
+  end
 
-    it "should see locals passed in as a binding" do
-      presenter.locals_from_binding.strip.must_equal "Local H"
-    end
+  it "sees updates after the file is reloaded" do
+    expect(presenter.simple_template.strip).to eq("Here's some math: 4")
 
-    it "should be able to call other methods from the same object" do
-      presenter.method_calls.strip.squeeze(" ").must_equal "Local H\nLocal H"
-    end
+    allow_any_instance_of(Keynote::Inline::Cache)
+      .to receive(:read_template).and_return("HELLO")
 
-    it "should handle errors relatively gracefully" do
-      begin
-        presenter.error_handling
-      rescue => e
-      end
+    expect(presenter.simple_template.strip).to eq("Here's some math: 4")
 
-      e.must_be_instance_of ActionView::Template::Error
+    allow(File).to receive(:mtime).with(
+      Object.const_source_location(:InlineUserPresenter).first
+    ).and_return(Time.now + 1)
 
-      if e.respond_to?(:original_exception)
-        e.original_exception.must_be_instance_of RuntimeError
-        e.original_exception.message.must_equal "UH OH"
-      else
-        e.cause.must_be_instance_of RuntimeError
-        e.cause.message.must_equal "UH OH"
-      end
-    end
-
-    it "should remove leading indentation" do
-      presenter.fix_indentation.must_equal \
-        "<div class=\"indented_slightly\">2 times 3 times 4 times </div>"
-    end
-
-    it "should escape HTML by default" do
-      unescaped = "<script>alert(1);</script>"
-      escaped   = unescaped.gsub(/</, "&lt;").gsub(/>/, "&gt;")
-      escaped2  = escaped.gsub(/\//, "&#47;") # for Slim w/ Rails > 3.0 (??)
-
-      clean_whitespace(presenter.erb_escaping).must_equal escaped + unescaped
-      clean_whitespace(presenter.haml_escaping).must_equal escaped + unescaped
-
-      [escaped + unescaped, escaped2 + unescaped].must_include \
-        clean_whitespace(presenter.slim_escaping)
-    end
-
-    it "should see updates after the file is reloaded" do
-      presenter.simple_template.strip.must_equal "Here's some math: 4"
-
-      Keynote::Inline::Cache.
-        any_instance.stubs(:read_template).returns("HELLO")
-
-      presenter.simple_template.strip.must_equal "Here's some math: 4"
-
-      FileUtils.touch __FILE__
-
-      presenter.simple_template.must_equal "HELLO"
-    end
+    expect(presenter.simple_template).to eq("HELLO")
   end
 end
