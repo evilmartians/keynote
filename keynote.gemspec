@@ -24,7 +24,7 @@ Gem::Specification.new do |s|
 
   s.license = "MIT"
 
-  s.files = Dir.glob("lib/**/*") + Dir.glob("lib/.rbnext/**/*") + Dir.glob("bin/**/*") + %w[README.md LICENSE.txt CHANGELOG.md]
+  s.files = Dir.glob("lib/**/*") + Dir.glob("lib/.rbnext/**/*") + Dir.glob("bin/**/*") + %w[README.md LICENSE.txt CHANGELOG.md .yardopts]
   s.require_paths = ["lib"]
 
   s.required_ruby_version = ">= 3.0"
@@ -42,6 +42,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency "haml"
   s.add_development_dependency "redcarpet"
   s.add_development_dependency "yard"
+  s.add_development_dependency "webrick"
 
   if ENV["RELEASING_GEM"].nil? && File.directory?(File.join(__dir__, ".git"))
     s.add_runtime_dependency "ruby-next", "~> 1.0"

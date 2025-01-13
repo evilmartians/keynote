@@ -1,4 +1,9 @@
-Copyright (c) 2025 Ryan Fitzgerald
+Copyright (c) 2012 Ryan Fitzgerald
+
+Includes a modified version of Rumble, which is (c) 2011 Magnus Holm.
+
+Some Rails integration code inspired by Draper, which is (c) 2011-2012 Jeff
+Casimir and other contributors.
 
 MIT License
 
@@ -20,4 +25,3 @@ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
 LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
