@@ -42,3 +42,5 @@ tmp/
 
 gemfiles/*.lock
 
+doc/
+.yardoc/

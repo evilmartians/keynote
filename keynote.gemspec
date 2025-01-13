@@ -17,7 +17,7 @@ Gem::Specification.new do |s|
   s.metadata = {
     "bug_tracker_uri" => "https://github.com/evilmartians/keynote/issues",
     "changelog_uri" => "https://github.com/evilmartians/keynote/blob/master/CHANGELOG.md",
-    "documentation_uri" => "https://github.com/evilmartians/keynote",
+    "documentation_uri" => "https://rubydoc.info/gems/keynote",
     "homepage_uri" => "https://github.com/evilmartians/keynote",
     "source_code_uri" => "https://github.com/evilmartians/keynote"
   }
@@ -41,6 +41,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency "slim"
   s.add_development_dependency "haml"
   s.add_development_dependency "redcarpet"
+  s.add_development_dependency "yard"
 
   if ENV["RELEASING_GEM"].nil? && File.directory?(File.join(__dir__, ".git"))
     s.add_runtime_dependency "ruby-next", "~> 1.0"

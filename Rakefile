@@ -31,4 +31,9 @@ task :nextify do
   sh "bundle exec ruby-next nextify -V"
 end
 
+require "yard"
+YARD::Rake::YardocTask.new do |t|
+  t.files = ["lib/**/*.rb"]
+end
+
 task default: %w[rubocop rubocop:md spec test]

@@ -1,5 +1,6 @@
 [![Gem Version](https://badge.fury.io/rb/keynote.svg)](https://rubygems.org/gems/keynote)
 [![Build](https://github.com/evilmartians/keynote/workflows/Build/badge.svg)](https://github.com/evilmartians/keynote/actions)
+[![Docs](https://img.shields.io/badge/docs-link-blue.svg)](https://rubydoc.info/gems/keynote)
 
 # Keynote
 
