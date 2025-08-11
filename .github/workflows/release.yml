@@ -24,4 +24,4 @@ jobs:
       - name: Publish to RubyGems
         run: |
           gem install gem-release
-          gem release
+          make ci-release

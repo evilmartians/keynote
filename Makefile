@@ -16,3 +16,5 @@ release: test lint
 	git push
 	git push --tags
 
+ci-release: nextify lint
+	RELEASING_ANYWAY=true gem release
