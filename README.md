@@ -231,10 +231,10 @@ end
 
 ### MiniTest
 
-Your test classes should inherit from Keynote::TestCase.
-
 ```ruby
-class UserPresenterTest < Keynote::TestCase
+class UserPresenterTest < ActiveSupport::TestCase
+  include Keynote::TestHelpers
+
   setup do
     user = User.new(first_name: "Alice", last_name: "Smith")
     @presenter = present(user)
