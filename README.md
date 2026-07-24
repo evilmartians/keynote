@@ -13,6 +13,10 @@ presenters help you keep complex logic out of your templates.
 Keynote provides a consistent interface for defining and instantiating
 presenters.
 
+<br/>
+
+<img src="https://cdn.evilmartians.com/badges/logo-no-label.svg" alt="Evil Martians logo" width="22" height="16" /> <b>Keynote</b> is currently maintained by <b><a href="https://evilmartians.com/">Evil Martians</a></b>, an American design and engineering consultancy for <b>developer tools, AI, and cybersecurity startups</b>.
+
 ## Requirements
 
 - Ruby >= 3.0.0
