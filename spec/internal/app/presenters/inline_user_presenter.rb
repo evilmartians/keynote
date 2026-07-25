@@ -2,6 +2,7 @@
 
 class InlineUserPresenter < Keynote::Presenter
   extend Keynote::Inline
+
   inline :slim, :haml
 
   def simple_template(template = %(Here's some math: <%= 2 + 2 %>))

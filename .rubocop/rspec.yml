@@ -1,4 +1,4 @@
-require:
+plugins:
   - rubocop-rspec
 
 RSpec:
@@ -42,4 +42,3 @@ RSpec/MissingExampleGroupArgument:
 
 RSpec/ReceiveCounts:
   Enabled: true
-

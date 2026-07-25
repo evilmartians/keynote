@@ -9,6 +9,7 @@ require "benchmark/ips"
 
 class MyPresenter < Keynote::Presenter
   extend Keynote::Inline
+
   inline :erb
 
   def my_string

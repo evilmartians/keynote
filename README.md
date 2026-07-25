@@ -114,6 +114,7 @@ class UserPresenter < Keynote::Presenter
   presents :user
 
   include Keynote::Inline
+
   # To user Haml or Slim, enabled them explicitly
   # inline :haml, :slim
 
@@ -153,7 +154,7 @@ class HeaderPresenter < Keynote::Presenter
 
   def profile_link
     build_html do
-      div class: 'profile_link' do
+      div class: "profile_link" do
         k(user).profile_link
       end
     end
@@ -161,8 +162,8 @@ class HeaderPresenter < Keynote::Presenter
 
   def login_link
     build_html do
-      div class: 'login_link' do
-        link_to 'Log In', login_url
+      div class: "login_link" do
+        link_to "Log In", login_url
       end
     end
   end
