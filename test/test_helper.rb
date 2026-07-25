@@ -6,13 +6,14 @@ rescue LoadError
 end
 
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
-require "ruby-next/language/runtime"
 
+require "ruby-next/language"
 if ENV["CI"] == "true"
   # Only transpile specs, source code MUST be loaded from pre-transpiled files
   RubyNext::Language.include_patterns.clear
   RubyNext::Language.include_patterns << "#{__dir__}/*.rb"
 end
+require "ruby-next/language/runtime"
 
 ENV["RAILS_ENV"] = "test"
 
