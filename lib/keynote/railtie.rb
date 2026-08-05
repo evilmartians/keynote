@@ -26,10 +26,8 @@ module Keynote
         require "keynote/testing/rspec"
       end
 
-      begin
-        ::ActionView::TestCase # rubocop:disable Lint/Void
+      if defined?(ActiveSupport::TestCase)
         require "keynote/testing/minitest"
-      rescue
       end
     end
   end
