@@ -44,11 +44,12 @@ module Keynote
         presenter_name_from_object(objects[0])
       end
 
-      Cache.fetch(name, view, *objects) do
-        presenter_from_name(name).new(view, *objects).tap do |presenter|
-          yield presenter if block_given?
-        end
+      presenter = Cache.fetch(name, view, *objects) do
+        presenter_from_name(name).new(view, *objects)
       end
+
+      yield presenter if block_given?
+      presenter
     end
 
     private

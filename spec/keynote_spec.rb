@@ -41,6 +41,23 @@ describe Keynote do
       end
     end
 
+    it "yields to the block even when the presenter is cached" do
+      m = double
+      expect(m).to receive(:block_yielded).twice
+
+      2.times do
+        Keynote.present(view, :normal, "hello") do |p|
+          m.block_yielded
+
+          expect(p).not_to be_nil
+          expect(p).to be_a(NormalPresenter)
+
+          expect(p.view).to eq(view)
+          expect(p.model).to eq("hello")
+        end
+      end
+    end
+
     it "integrates with Rumble" do
       p = Keynote.present(view, model)
       rx = /<div>&lt;script&gt;alert\(/

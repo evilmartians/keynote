@@ -1,5 +1,7 @@
 # Change log
 
+- Ensure the block passed to `Keynote.present` is executed both when creating a new presenter and when retrieving one from the cache.  
+
 ## v2.0.0 (2025-01-10)
 
 - Update the inline template API to pass source as string instead of parsing comments. [@palkan][]
