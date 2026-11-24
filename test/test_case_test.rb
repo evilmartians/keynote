@@ -2,7 +2,9 @@
 
 require "test_helper"
 
-class Foo::BarPresenterTest < Keynote::TestCase
+class Foo::BarPresenterTest < ActiveSupport::TestCase
+  include Keynote::TestHelper
+
   setup do
     @presenter = Foo::BarPresenter.new(view, :model)
   end
