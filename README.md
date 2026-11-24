@@ -233,7 +233,7 @@ end
 
 ```ruby
 class UserPresenterTest < ActiveSupport::TestCase
-  include Keynote::TestHelpers
+  include Keynote::TestHelper
 
   setup do
     user = User.new(first_name: "Alice", last_name: "Smith")
